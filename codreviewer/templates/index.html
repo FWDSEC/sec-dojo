@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code Review Challenges</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v=static_version) }}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logos" aria-label="Forward Security and Safe">
+            <div class="brand-logo-box brand-logo-box--square">
+              <img
+                class="brand-logo brand-logo--fwdsec"
+                src="{{ url_for('static', filename='fwdsec_logo.jpeg', v=static_version) }}"
+                alt="Forward Security"
+              />
+            </div>
+            <div class="brand-logo-box brand-logo-box--wide">
+              <img
+                class="brand-logo brand-logo--safe"
+                src="{{ url_for('static', filename='safe-logo-lg.png', v=static_version) }}"
+                alt="Safe"
+              />
+            </div>
+          </div>
+          <div class="brand-title">Code Review Challenges</div>
+          <div class="brand-subtitle">
+            Pick a challenge, then review it in multiple languages.
+          </div>
+        </div>
+
+        <nav class="nav">
+          <div class="nav-title">Challenges</div>
+          <ul class="challenge-list">
+            {% for c in challenges %}
+            <li>
+              <button class="challenge-item" type="button" data-challenge-id="{{ c.id }}">
+                <span class="challenge-num">#{{ c.id }}</span>
+                <span class="challenge-title">{{ c.title }}</span>
+              </button>
+            </li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="challenge-header">
+          <div class="challenge-kicker" id="challenge-kicker">Challenge</div>
+          <h1 class="challenge-heading" id="challenge-heading"></h1>
+          <p class="challenge-description" id="challenge-description"></p>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="Languages">
+          <button class="tab" type="button" data-lang="cpp" role="tab">C++</button>
+          <button class="tab" type="button" data-lang="python" role="tab">Python</button>
+          <button class="tab" type="button" data-lang="java" role="tab">Java</button>
+          <button class="tab" type="button" data-lang="typescript" role="tab">
+            TypeScript
+          </button>
+        </div>
+
+        <section class="code-card" aria-label="Code sample">
+          <div class="code-toolbar">
+            <div class="code-lang" id="code-lang-label"></div>
+            <button class="btn" id="copy-btn" type="button">Copy</button>
+          </div>
+
+          <pre class="code-pre"><code id="code-block"></code></pre>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="answers-panel" id="answers-panel" aria-label="Answers" hidden>
+          <div class="answers-toolbar">
+            <div>
+              <div class="answers-title">Answers</div>
+              <div class="answers-subtitle">Reveal mode is enabled.</div>
+            </div>
+          </div>
+          <div class="answers-list" id="answers-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.__CHALLENGES__ = {{ challenges | tojson }};
+      window.__INITIAL_CHALLENGE__ = {{ initial_challenge | tojson }};
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+
+    <script src="{{ url_for('static', filename='app.js', v=static_version) }}" defer></script>
+  </body>
+</html>
+

@@ -1,0 +1,17 @@
+[Unit]
+Description=Code Review Challenges (Forward Security)
+After=network.target
+
+[Service]
+Type=simple
+User=crchallenges
+Group=crchallenges
+WorkingDirectory=/opt/code-review-challenges
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/code-review-challenges/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 --access-logfile - --error-logfile - app:app
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+

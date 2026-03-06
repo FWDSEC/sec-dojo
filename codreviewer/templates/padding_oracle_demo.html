@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Padding Oracle Demo</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v=static_version) }}" />
+  </head>
+  <body>
+    <div class="demo-container">
+      <header class="demo-header">
+        <a class="btn demo-back" href="/">← Back</a>
+        <div>
+          <div class="challenge-kicker">Demo</div>
+          <h1 class="challenge-heading">Padding oracle (AES-CBC + PKCS#7)</h1>
+          <p class="challenge-description">
+            This page uses an intentionally vulnerable endpoint that leaks whether the ciphertext had
+            valid padding. The “attacker” runs in your browser and recovers bytes by watching HTTP
+            responses.
+          </p>
+        </div>
+      </header>
+
+      {% if not crypto_ok %}
+      <section class="demo-card">
+        <div class="demo-card-title">Dependency missing</div>
+        <p class="demo-muted">
+          Install <code>pycryptodome</code> and restart the server.
+        </p>
+      </section>
+      {% endif %}
+
+      <section class="demo-card">
+        <div class="demo-card-title">1) Mint a token</div>
+        <div class="demo-muted">
+          Paste a JSON object (recommended) or just type a name. We’ll encrypt it as
+          <code>base64(IV || ciphertext)</code>.
+        </div>
+
+        <div class="demo-row">
+          <textarea id="payload" class="demo-textarea demo-textarea--mono" rows="4">
+{"user":"bob"}</textarea
+          >
+        </div>
+
+        <div class="demo-controls">
+          <button class="btn" id="mintBtn" type="button">Mint</button>
+          <label class="demo-checkbox">
+            <input id="revealPlain" type="checkbox" />
+            Show plaintext (teacher)
+          </label>
+        </div>
+        <div id="mintMsg" class="demo-muted" role="status" aria-live="polite"></div>
+
+        <div class="demo-kv">
+          <div class="demo-kv-label">Token (base64)</div>
+          <textarea id="token" class="demo-textarea demo-textarea--mono" rows="3" readonly></textarea>
+
+          <div class="demo-kv-grid">
+            <div>
+              <div class="demo-kv-label">IV (hex)</div>
+              <code id="ivHex" class="demo-code"></code>
+            </div>
+            <div>
+              <div class="demo-kv-label">Ciphertext blocks (hex)</div>
+              <code id="ctBlocks" class="demo-code"></code>
+            </div>
+          </div>
+
+          <div id="plaintextBox" hidden>
+            <div class="demo-kv-label">Plaintext (UTF-8)</div>
+            <pre id="plaintext" class="demo-pre"></pre>
+
+            <div class="demo-kv-label">Plaintext blocks (hex)</div>
+            <code id="ptBlocks" class="demo-code"></code>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-card">
+        <div class="demo-card-title">2) Oracle endpoint</div>
+        <div class="demo-controls">
+          <button class="btn" id="oracleBtn" type="button">
+            Send token → <code>/demo/padding-oracle/validate</code>
+          </button>
+          <div class="demo-muted">
+            Oracle rule: <strong>400</strong> = bad padding, anything else = padding OK.
+          </div>
+        </div>
+        <pre id="oracleOut" class="demo-pre"></pre>
+      </section>
+
+      <section class="demo-card">
+        <div class="demo-card-title">3) Attack (recover bytes of plaintext block #1)</div>
+        <div class="demo-muted">
+          This recovers the first 16 bytes of plaintext by tampering with the IV and watching the
+          oracle.
+        </div>
+
+        <div class="demo-controls">
+          <label class="demo-label">
+            Bytes to recover (from end of block):
+            <input id="bytesToRecover" type="number" min="1" max="16" value="4" />
+          </label>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+          <button class="btn" id="stepBtn" type="button">Step 1 guess</button>
+          <button class="btn" id="runBtn" type="button">Run until done</button>
+        </div>
+
+        <div class="demo-grid2">
+          <div>
+            <div class="demo-kv-label">Recovered bytes (hex)</div>
+            <pre id="recoveredHex" class="demo-pre"></pre>
+            <div class="demo-kv-label">Recovered bytes (ASCII)</div>
+            <pre id="recoveredAscii" class="demo-pre"></pre>
+          </div>
+          <div>
+            <div class="demo-kv-label">Current step</div>
+            <pre id="stepInfo" class="demo-pre"></pre>
+          </div>
+        </div>
+
+        <div class="demo-attempts">
+          <div class="demo-kv-label">Guess attempts (current byte)</div>
+          <div class="demo-byte-tabs" id="byteTabs" role="tablist" aria-label="Byte logs"></div>
+          <div class="demo-table-wrap">
+            <table class="demo-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Guess</th>
+                  <th>HTTP</th>
+                  <th>Decoded IV′ (hex)</th>
+                  <th>Sent token (base64)</th>
+                </tr>
+              </thead>
+              <tbody id="attemptRows"></tbody>
+            </table>
+          </div>
+
+          <div class="demo-derivation">
+            <div class="demo-kv-label">How we compute each recovered byte</div>
+            <div class="demo-muted">
+              When the server returns <strong>not 400</strong>, the padding check succeeded. For the
+              current byte position <code>i</code> and target padding value <code>pad</code>:
+              <div class="demo-formulas">
+                <code>X[i] = IV′[i] XOR pad</code>
+                <code>P[i] = X[i] XOR IV[i]</code>
+              </div>
+            </div>
+            <div id="derivationLog" class="demo-derivation-log"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="demo-footer">
+        <div class="demo-muted">
+          ⚠️ <code>/demo/padding-oracle/validate</code> is intentionally vulnerable. Don’t deploy
+          this pattern.
+        </div>
+      </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='padding_oracle_demo.js', v=static_version) }}" defer></script>
+  </body>
+</html>
+
