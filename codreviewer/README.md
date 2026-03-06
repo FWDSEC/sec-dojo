@@ -5,6 +5,7 @@ A tiny Flask app that lets you browse code review challenges with the same scena
 ### Run it locally
 
 ```bash
+cd codreviewer
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

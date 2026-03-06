@@ -6,6 +6,7 @@ Icon?
 
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -13,7 +14,9 @@ __pycache__/
 
 # Virtual environments
 .venv/
+**/.venv/
 venv/
+**/venv/
 ENV/
 env/
 
